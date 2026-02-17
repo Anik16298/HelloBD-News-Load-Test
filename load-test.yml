@@ -1,0 +1,117 @@
+config:
+  target: "https://hellobd.news"
+  plugins:
+    metrics-by-endpoint: {}
+  environments:
+    smoke:
+      phases:
+        - duration: 30
+          arrivalRate: 1
+    load:
+      phases:
+        - duration: 60
+          arrivalRate: 5
+          rampTo: 20
+        - duration: 180
+          arrivalRate: 20
+    pure:
+      phases:
+        - name: "Ramp up to 100 users/sec"
+          duration: 60
+          arrivalRate: 10
+          rampTo: 100
+        - name: "Sustain High Load"
+          duration: 60
+          arrivalRate: 100
+    stepped:
+      phases:
+        - name: "Step 1: 100 Concurrent (10/s)"
+          duration: 30
+          arrivalRate: 10
+        - name: "Step 2: 200 Concurrent (20/s)"
+          duration: 30
+          arrivalRate: 20
+        - name: "Step 3: 300 Concurrent (30/s)"
+          duration: 30
+          arrivalRate: 30
+        - name: "Step 4: 400 Concurrent (40/s)"
+          duration: 30
+          arrivalRate: 40
+        - name: "Step 5: 500 Concurrent (50/s)"
+          duration: 30
+          arrivalRate: 50
+        - name: "Step 6: 600 Concurrent (60/s)"
+          duration: 30
+          arrivalRate: 60
+        - name: "Step 7: 700 Concurrent (70/s)"
+          duration: 30
+          arrivalRate: 70
+        - name: "Step 8: 800 Concurrent (80/s)"
+          duration: 30
+          arrivalRate: 80
+        - name: "Step 9: 900 Concurrent (90/s)"
+          duration: 30
+          arrivalRate: 90
+        - name: "Step 10: 1000 Concurrent (100/s)"
+          duration: 30
+          arrivalRate: 100
+    stress:
+      phases:
+        - duration: 60
+          arrivalRate: 10
+          rampTo: 100
+        - duration: 300
+          arrivalRate: 100
+
+  defaults:
+    headers:
+      User-Agent: "Artillery Load Tester (https://artillery.io)"
+
+scenarios:
+  - name: "Section: Homepage"
+    weight: 30
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+
+  - name: "Section: Category - Bangladesh"
+    weight: 20
+    flow:
+      - get:
+          url: "/category/bangladesh"
+          expect:
+            - statusCode: 200
+
+  - name: "Section: Category - International"
+    weight: 20
+    flow:
+      - get:
+          url: "/category/international"
+          expect:
+            - statusCode: 200
+
+  - name: "Section: Category - Sports"
+    weight: 10
+    flow:
+      - get:
+          url: "/category/sports"
+          expect:
+            - statusCode: 200
+
+  - name: "Section: Category - Entertainment"
+    weight: 10
+    flow:
+      - get:
+          url: "/category/entertainment"
+          expect:
+            - statusCode: 200
+
+  - name: "Section: Policy Pages"
+    weight: 10
+    flow:
+      - get:
+          url: "/privacy-policy"
+          expect:
+            - statusCode: 200

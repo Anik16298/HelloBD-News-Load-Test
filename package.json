@@ -1,0 +1,23 @@
+{
+  "name": "hellobd-load-test",
+  "version": "1.0.0",
+  "description": "Load testing suite for hellobd.news using Artillery",
+  "main": "index.js",
+  "scripts": {
+    "test:smoke": "artillery run --target https://hellobd.news load-test.yml --environment smoke --output report.json",
+    "test:load": "artillery run --target https://hellobd.news load-test.yml --environment load --output report.json",
+    "test:pure": "artillery run --target https://hellobd.news load-test.yml --environment pure --output report.json",
+    "test:stepped": "artillery run --target https://hellobd.news load-test.yml --environment stepped --output report.json",
+    "test:stress": "artillery run --target https://hellobd.news load-test.yml --environment stress --output report.json",
+    "check-site": "curl -I https://hellobd.news",
+    "report": "node generate-report.js && echo Report generated: report.html"
+  },
+  "dependencies": {
+    "artillery": "^2.0.0-38",
+    "artillery-plugin-metrics-by-endpoint": "^1.24.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

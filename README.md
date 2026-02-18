@@ -90,4 +90,4 @@ npm run test:stress   # Stress test
 
 ---
 
-*Architected by <a href="https://github.com/Anik16298">Anik Chakraborty</a> - <a href="https://hellobd.news">HelloBD News</a> Test Audit*
+*Architected by <a href="https://github.com/Anik16298">Anik Chakraborty</a> --> <a href="https://hellobd.news">HelloBD News</a> Test Audit*

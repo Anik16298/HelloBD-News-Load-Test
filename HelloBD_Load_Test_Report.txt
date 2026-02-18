@@ -1,0 +1,63 @@
+************************************************************
+             HelloBD NEWS: CATEGORY WISE LOAD TEST REPORT
+************************************************************
+
+OVERALL STATUS: 🔴 CRITICAL
+REPORT GENERATE DATE: February 18, 2026
+
+1. TEST DETAILS & METHODOLOGY
+--------------------------------------
+The test simulated a progressive load on the category pages with 9 defined phases:
+- Warmup: 30s, 100 users/sec
+- Push: 30s, 150 users/sec
+- Hard Push: 30s, 250 users/sec
+- Overload: 30s, 350 users/sec
+- Extreme: 30s, 500 users/sec
+- Brutal: 30s, 650 users/sec
+- Savage: 30s, 800 users/sec
+- Catastrophic: 30s, 900 users/sec
+- Max Load: 30s, 1000 users/sec
+
+- **Total Duration:** 550 Seconds
+- **Average Request Rate:** 15558 requests every minute
+- **Total Traffic Volume:** 142526 Total Requests
+
+2. VISITOR SUCCESS & FAILURE BREAKDOWN
+------------------------------------------
+Network traffic analysis results:
+
+- **SUCCESSFUL ENTRANCES:** 2015 (1.41% of all visitors)
+- **FAILED ATTEMPTS:** 140511 (98.59% of all visitors)
+- **DAILY PROJECTION:** Based on current traffic patterns, if this load continues for 
+  just 1 hour, potential visitor loss would exceed 920155.
+
+3. LOSS CALCULATION BY SITE SECTION
+---------------------------------------
+Failure rate analysis by category:
+
+- **/CATEGORY/INTERNATIONAL:** 0.0% Failure Rate (9607.1ms Tail Latency)
+- **/CATEGORY/BANGLADESH:** 0.0% Failure Rate (9416.8ms Tail Latency)
+- **/CATEGORY/SPORTS:** 0.0% Failure Rate (9416.8ms Tail Latency)
+
+*Observation: There is noticeable stress on certain endpoints as load increases.*
+
+4. PROBLEM IDENTIFICATION (ANALYSIS)
+------------------------------------------
+Server response time analysis:
+- **Speed Test:** The median response time was **6187.2ms**.
+- **Stress Test:** The P95 (slowest 5%) reached **9999.2ms**.
+- **Observation:** The server is returning some errors under pressure.
+
+5. CALCULATED CAPACITY LIMITS
+---------------------------------
+Operational zones based on test data:
+
+- ✅ **SAFE ZONE:** Up to 207.4 Requests Per Second.
+- ⚠️ **WARNING ZONE:** Over 259.3 Requests Per Second.
+
+6. RECOMMENDED FIXES (ACTION PLAN)
+----------------------------------------
+1. Ensure the category pages are properly cached at the Edge (CDN).
+2. Monitor database query execution times for category filters.
+3. Consider horizontal scaling if arrival rates exceed 50 users/sec.
+

@@ -1,0 +1,48 @@
+config:
+  target: "https://hellobd.news"
+  phases:
+    - duration: 30
+      arrivalRate: 100
+      name: "Warmup"
+    - duration: 30
+      arrivalRate: 150
+      name: "Push"
+    - duration: 30
+      arrivalRate: 250
+      name: "Hard Push"
+    - duration: 30
+      arrivalRate: 350
+      name: "Overload"
+    - duration: 30
+      arrivalRate: 500
+      name: "Extreme"
+    - duration: 30
+      arrivalRate: 650
+      name: "Brutal"
+    - duration: 30
+      arrivalRate: 800
+      name: "Savage"
+    - duration: 30
+      arrivalRate: 900
+      name: "Catastrophic"
+    - duration: 30
+      arrivalRate: 1000
+      name: "Max Load"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  plugins:
+    metrics-by-endpoint:
+      useOnlyPath: true
+
+scenarios:
+  - name: "Category Page Validation"
+    flow:
+      - get:
+          url: "/category/international"
+      - think: 1
+      - get:
+          url: "/category/bangladesh"
+      - think: 1
+      - get:
+          url: "/category/sports"

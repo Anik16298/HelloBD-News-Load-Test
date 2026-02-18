@@ -1,79 +1,93 @@
-# 🚀 HelloBD News: Advanced Load Testing Suite
+# HelloBD News — Load Test Suite
 
-![Load Test Badge](https://img.shields.io/badge/Test%20Engine-Artillery.io-blueviolet?style=for-the-badge&logo=artillery)
-![Status Badge](https://img.shields.io/badge/Status-Critical-red?style=for-the-badge)
-![Coverage Badge](https://img.shields.io/badge/Coverage-Full%20Site-green?style=for-the-badge)
-
-A premium, high-performance load testing suite designed to stress-test and analyze the infrastructure of `https://hellobd.news/`. This suite simulates realistic user behavior from casual browsing to massive viral traffic spikes.
+A comprehensive load testing suite for [hellobd.news](https://hellobd.news) using **Artillery.io**, covering category page validation under extreme traffic conditions.
 
 ---
 
-## 📋 Project Overview
+## 📁 Project Structure
 
-This project was built to identify the exact breaking point of the HelloBD News platform. It uses a **Stepped Load Strategy** (100 to 1,000 concurrent users) to benchmark stability, latency, and connection handling.
-
-### ✨ Key Features
-- **🎯 Multi-Section Coverage:** Homepage, News Categories, and Policy pages.
-- **📈 Stepped Ramp-up:** Smoothly increases load to find the "Danger Zone."
-- **📊 Intelligence Reporting:** Generates both technical JSON data and human-friendly visual HTML reports.
-- **🧠 First-Person Audit:** Includes a personalized breakdown of the site's "Entrance Gate" capacity.
+```
+hellobd-load-test/
+├── extreme-load-test.yml        # Category page load test (100–1000 users/sec, 9 phases)
+├── load-test.yml                # General load test scenarios (smoke, load, stress)
+├── generate-report.js           # Unified report generator (HTML + PDF + TXT)
+├── package.json                 # Project dependencies & npm scripts
+├── HelloBD_Load_Test_Report.txt  # Latest plain-text summary report
+├── HelloBD_Load_Test_Report.html # Latest HTML report
+├── HelloBD_Load_Test_Report.pdf  # Latest PDF report
+├── HelloBD_Load_Test_Report.md   # Detailed markdown results with tables & analysis
+└── README.md
+```
 
 ---
 
-## ⚡ Quick Start
+## 🚀 Quick Start
 
-### 1. Installation
+### Install dependencies
 ```bash
 npm install
+npx playwright install
 ```
 
-### 2. Run the "Stress Step" Test (100-1,000 Users)
-This is the most powerful test in the suite, ramping up in 10 distinct phases.
+### Run the Extreme Load Test (100–1000 users)
 ```bash
-npm run test:stepped
+npm run test:extreme
 ```
 
-### 3. Generate Visual Report
+### Generate HTML + PDF Reports
 ```bash
 npm run report
 ```
-*Open `report.html` in your browser to see interactive charts.*
+
+### Run test + generate report in one command
+```bash
+npm run full-extreme-test
+```
 
 ---
 
-## 🚦 Test Levels
+## 📊 Test Phases (Extreme Load Test)
 
-| Command | Intensity | Purpose |
-| :--- | :--- | :--- |
-| `npm run test:smoke` | 🟢 Low | Quick verification of site availability. |
-| `npm run test:load` | 🟡 Medium | Standard peak-hour traffic simulation. |
-| `npm run test:stepped` | 🔴 High | **(Recommended)** 100 to 1,000 user ramp-up. |
-| `npm run test:stress` | 🔥 Extreme | Pushes the server to its absolute physical limits. |
-
----
-
-## 🧐 The "Plain English" Problem
-From my latest audit, the site has a fast "interior" but a tiny "front door." 
-
-> **The Mall Metaphor:** Our site is like a fast-service restaurant with a security guard at the door. The chefs (backend) are fast, but the guard (server limits) starts pushing people away as soon as a crowd forms.
-
-- **Safe Limit:** 10 Visitors/Sec ✅
-- **Warning Zone:** 15 Visitors/Sec ⚠️
-- **Danger Zone:** 20+ Visitors/Sec ❌
+| Phase        | Duration | Users/sec |
+|--------------|----------|-----------|
+| Warmup       | 30s      | 100       |
+| Push         | 30s      | 150       |
+| Hard Push    | 30s      | 250       |
+| Overload     | 30s      | 350       |
+| Extreme      | 30s      | 500       |
+| Brutal       | 30s      | 650       |
+| Savage       | 30s      | 800       |
+| Catastrophic | 30s      | 900       |
+| Max Load     | 30s      | 1000      |
 
 ---
 
-## 📂 Project Anatomy
+## 🔍 Scenarios Tested
 
-- `load-test.yml`: The "brain" of the test – defines scenarios and load phases.
-- `generate-report.js`: Custom script that turns raw data into a beautiful HTML dashboard.
-- `LOAD_TEST_REPORT_SUMMARY.txt`: A personalized, easy-to-read memo of the latest findings.
-- `LOAD_TEST_RESULTS.md`: Detailed technical analysis for developers.
+- `/category/international`
+- `/category/bangladesh`
+- `/category/sports`
+
+---
+
+## 📈 Reports Generated
+
+After running `npm run report`, the following files are created:
+
+- **`HelloBD_Load_Test_Report.html`** — Full visual HTML report with stats and endpoint breakdown
+- **`HelloBD_Load_Test_Report.pdf`** — PDF version of the HTML report (for sharing/presentation)
+- **`HelloBD_Load_Test_Report.txt`** — Plain-text summary with analysis and recommendations
 
 ---
 
-## ⚠️ Important Disclaimer
-**Load testing without permission is considered a DoS attack.** Ensure you have explicit authorization from the owner of `hellobd.news` before running high-intensity scripts.
+## 🛠 Other Test Scripts
+
+```bash
+npm run test:smoke    # Smoke test
+npm run test:load     # Standard load test
+npm run test:stress   # Stress test
+```
 
 ---
-*Created by <a href="https://github.com/Anik16298">Anik Chakraborty</a> - HelloBD News Performance Audit 2026*
+
+*Load testing powered by [Artillery.io](https://artillery.io)*

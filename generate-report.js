@@ -1,10 +1,13 @@
 const fs = require('fs');
 const path = require('path');
+const { chromium } = require('playwright');
 
-function generateReport() {
+const reportName = 'HelloBD_Load_Test_Report';
+
+async function generateReports() {
     const reportPath = path.join(__dirname, 'report.json');
     if (!fs.existsSync(reportPath)) {
-        console.error('report.json not found! Run a test first.');
+        console.error('report.json not found! Run a test first (e.g., npm run test:extreme).');
         process.exit(1);
     }
 
@@ -21,16 +24,16 @@ function generateReport() {
     const summaries = aggregate.summaries || {};
     const rt = summaries['http.response_time'] || { min: 0, median: 0, p95: 0, p99: 0, max: 0 };
 
+    // Duration Calculation (in seconds)
+    const durationSeconds = (aggregate.lastMetricAt - aggregate.firstMetricAt) / 1000 || 180;
     const targetUrl = config.target || "https://hellobd.news";
     const totalRequests = counters['http.requests'] || 0;
     const okRequests = counters['http.codes.200'] || 0;
     const successRate = totalRequests > 0 ? ((okRequests / totalRequests) * 100).toFixed(2) : 0;
-    const failedUsers = counters['vusers.failed'] || 0;
-    const totalUsers = counters['vusers.created'] || 0;
 
-    // Timeline Data Extraction
+    // Timeline Data
     const timelineLabels = intermediate.map((_, i) => `${i * 10}s`);
-    const timelineRps = intermediate.map(m => m.counters['http.requests'] / 10 || 0);
+    const timelineRps = intermediate.map(m => (m.counters['http.requests'] || 0) / 10);
     const timelineLatencies = intermediate.map(m => m.summaries['http.response_time']?.p95 || 0);
 
     // Endpoint Analysis
@@ -39,198 +42,211 @@ function generateReport() {
         .map(k => {
             const name = k.replace('plugins.metrics-by-endpoint.response_time.', '');
             const s = summaries[k];
-            const errKey = `plugins.metrics-by-endpoint.${name}.errors.ETIMEDOUT`;
+            // Try to find status codes for this endpoint
+            const baseKey = `plugins.metrics-by-endpoint.${name}`;
+            const ok = counters[`${baseKey}.codes.200`] || 0;
+            const total = Object.keys(counters)
+                .filter(ck => ck.startsWith(`${baseKey}.codes.`))
+                .reduce((acc, ck) => acc + counters[ck], 0) || ok;
+
             return {
                 name,
                 p50: s.median || 0,
                 p95: s.p95 || 0,
-                p99: s.p99 || 0,
-                errors: counters[errKey] || 0
+                successRate: total > 0 ? ((ok / total) * 100).toFixed(1) : '100.0'
             };
         });
 
-    // Executive Analysis Logic
-    let status = { text: 'Excellent', color: '#10b981', desc: 'System is highly responsive and stable.' };
-    if (successRate < 90) status = { text: 'Critical', color: '#ef4444', desc: 'Severe failure rate. Server cannot handle this concurrency level.' };
-    else if (successRate < 98 || rt.p95 > 3000) status = { text: 'Degraded', color: '#f59e0b', desc: 'System is slow and dropping connections under peak load.' };
+    // If no endpoints detected by plugin, use aggregate
+    if (endpoints.length === 0) {
+        endpoints.push({
+            name: 'Generic Endpoints (Aggregate)',
+            p50: rt.median,
+            p95: rt.p95,
+            successRate: successRate
+        });
+    }
 
+    // Determine Status
+    let statusText = 'EXCELLENT';
+    let statusColor = '#10b981';
+    let statusEmoji = '✅';
+    if (successRate < 90) {
+        statusText = 'CRITICAL';
+        statusColor = '#ef4444';
+        statusEmoji = '🔴';
+    } else if (successRate < 98) {
+        statusText = 'DEGRADED';
+        statusColor = '#f59e0b';
+        statusEmoji = '⚠️';
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const avgRps = (totalRequests / durationSeconds).toFixed(1);
+    const safeRps = (parseFloat(avgRps) * 0.8).toFixed(1);
+
+    // 1. Generate TXT Summary
+    const txtReport = `************************************************************
+             HelloBD NEWS: CATEGORY WISE LOAD TEST REPORT
+************************************************************
+
+OVERALL STATUS: ${statusEmoji} ${statusText}
+REPORT GENERATE DATE: ${today}
+
+1. TEST DETAILS & METHODOLOGY
+--------------------------------------
+The test simulated a progressive load on the category pages with 9 defined phases:
+- Warmup: 30s, 100 users/sec
+- Push: 30s, 150 users/sec
+- Hard Push: 30s, 250 users/sec
+- Overload: 30s, 350 users/sec
+- Extreme: 30s, 500 users/sec
+- Brutal: 30s, 650 users/sec
+- Savage: 30s, 800 users/sec
+- Catastrophic: 30s, 900 users/sec
+- Max Load: 30s, 1000 users/sec
+
+- **Total Duration:** ${Math.round(durationSeconds)} Seconds
+- **Average Request Rate:** ${(avgRps * 60).toFixed(0)} requests every minute
+- **Total Traffic Volume:** ${totalRequests} Total Requests
+
+2. VISITOR SUCCESS & FAILURE BREAKDOWN
+------------------------------------------
+Network traffic analysis results:
+
+- **SUCCESSFUL ENTRANCES:** ${okRequests} (${successRate}% of all visitors)
+- **FAILED ATTEMPTS:** ${totalRequests - okRequests} (${(100 - successRate).toFixed(2)}% of all visitors)
+- **DAILY PROJECTION:** Based on current traffic patterns, if this load continues for 
+  just 1 hour, potential visitor loss would exceed ${((totalRequests - okRequests) * (3600 / durationSeconds)).toFixed(0).toLocaleString()}.
+
+3. LOSS CALCULATION BY SITE SECTION
+---------------------------------------
+Failure rate analysis by category:
+
+${endpoints.map(e => `- **${e.name.toUpperCase()}:** ${(100 - parseFloat(e.successRate)).toFixed(1)}% Failure Rate (${e.p95}ms Tail Latency)`).join('\n')}
+
+*Observation: ${successRate > 99 ? 'The site is holding up perfectly under this load.' : 'There is noticeable stress on certain endpoints as load increases.'}*
+
+4. PROBLEM IDENTIFICATION (ANALYSIS)
+------------------------------------------
+Server response time analysis:
+- **Speed Test:** The median response time was **${rt.median}ms**.
+- **Stress Test:** The P95 (slowest 5%) reached **${rt.p95}ms**.
+- **Observation:** ${totalRequests - okRequests > 0 ? 'The server is returning some errors under pressure.' : 'No errors were detected during this specific test run.'}
+
+5. CALCULATED CAPACITY LIMITS
+---------------------------------
+Operational zones based on test data:
+
+- ✅ **SAFE ZONE:** Up to ${safeRps} Requests Per Second.
+- ⚠️ **WARNING ZONE:** Over ${avgRps} Requests Per Second.
+
+6. RECOMMENDED FIXES (ACTION PLAN)
+----------------------------------------
+1. Ensure the category pages are properly cached at the Edge (CDN).
+2. Monitor database query execution times for category filters.
+3. Consider horizontal scaling if arrival rates exceed 50 users/sec.
+`;
+
+    fs.writeFileSync(path.join(__dirname, 'HelloBD_Load_Test_Report.txt'), txtReport);
+
+    // 2. Generate HTML Report
     const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>End-to-End Load Report | HelloBD</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Load Test Report - Category Validation</title>
     <style>
-        :root {
-            --primary: #4f46e5; --secondary: #1e293b; --accent: #8b5cf6;
-            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-            --bg: #f8fafc; --surface: #ffffff; --text: #334155;
-        }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.6; }
-        .sidebar { position: fixed; width: 280px; height: 100vh; background: var(--secondary); color: white; padding: 2rem; }
-        .main { margin-left: 320px; padding: 2rem; max-width: 1200px; }
-        .header { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 2rem; position: relative; overflow: hidden; }
-        .header::after { content: ''; position: absolute; top:0; left:0; width: 6px; height: 100%; background: ${status.color}; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .stat-card h4 { margin: 0; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .stat-card .value { font-size: 1.75rem; font-weight: 800; color: #0f172a; margin: 0.5rem 0; }
-        
-        .chart-box { background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-        .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { text-align: left; padding: 1rem; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; font-weight: 600; color: #475569; }
-        
-        .badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; color: white; background: ${status.color}; }
-        code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; }
-        
-        .fail { color: var(--danger); font-weight: bold; }
-        .ok { color: var(--success); font-weight: bold; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: #333; line-height: 1.6; padding: 40px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .status-box { padding: 15px; border-radius: 4px; margin: 20px 0; font-weight: bold; text-align: center; font-size: 1.2em; }
+        .status-critical { background: #fee2e2; color: #991b1b; }
+        .status-degraded { background: #fef3c7; color: #92400e; }
+        .status-excellent { background: #dcfce7; color: #166534; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
+        .stat-card { background: #f8fafc; padding: 20px; border-left: 4px solid #3498db; }
+        .stat-card h3 { margin: 0; font-size: 0.9em; color: #64748b; text-transform: uppercase; }
+        .stat-card p { margin: 10px 0 0; font-size: 1.8em; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; }
+        pre { background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; font-size: 0.9em; }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>HelloBD</h2>
-        <p style="opacity: 0.6; font-size: 0.9rem;">Intelligence Report</p>
-        <hr style="opacity: 0.1; margin: 2rem 0;">
-        <nav>
-            <p><strong>TEST ENGINE</strong><br>Artillery.io v2.0</p>
-            <p><strong>ENVIRONMENT</strong><br>${config.environment || 'N/A'}</p>
-            <p><strong>DURATION</strong><br>${aggregate.period / 1000} Seconds</p>
-        </nav>
+    <div class="container">
+        <h1>Category Page Validation Report</h1>
+        <div class="status-box status-${statusText.toLowerCase()}">
+            Status: ${statusEmoji} ${statusText}
+        </div>
+        
+        <div class="stat-grid">
+            <div class="stat-card"><h3>Success Rate</h3><p>${successRate}%</p></div>
+            <div class="stat-card"><h3>Avg Latency</h3><p>${rt.median}ms</p></div>
+            <div class="stat-card"><h3>P95 Latency</h3><p>${rt.p95}ms</p></div>
+            <div class="stat-card"><h3>Total Requests</h3><p>${totalRequests}</p></div>
+        </div>
+
+        <h2>Endpoint Breakdown</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Median</th>
+                    <th>P95</th>
+                    <th>Success Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${endpoints.map(e => `
+                <tr>
+                    <td><code>${e.name}</code></td>
+                    <td>${e.p50}ms</td>
+                    <td>${e.p95}ms</td>
+                    <td>${e.successRate}%</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+
+        <div style="page-break-before: always;"></div>
+        <h2>Full Text Summary</h2>
+        <pre>${txtReport}</pre>
     </div>
-
-    <div class="main">
-        <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1 style="margin:0;">Performance Analysis Final</h1>
-                    <p style="margin: 0.5rem 0 0 0; color: #64748b;">Target Endpoint: <code>${targetUrl}</code></p>
-                </div>
-                <span class="badge" style="font-size: 1.2rem; padding: 0.5rem 1.5rem;">${status.text}</span>
-            </div>
-            <p style="margin-top: 1.5rem; font-size: 1.1rem; color: #475569;">${status.desc}</p>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card"><h4>Success Rate</h4><div class="value">${successRate}%</div></div>
-            <div class="stat-card"><h4>Req Throughput</h4><div class="value">${(totalRequests / (aggregate.period / 1000)).toFixed(1)}/s</div></div>
-            <div class="stat-card"><h4>P95 Latency</h4><div class="value">${rt.p95}ms</div></div>
-            <div class="stat-card"><h4>Total Failures</h4><div class="value fail">${failedUsers}</div></div>
-        </div>
-
-        <div class="chart-grid">
-            <div class="chart-box">
-                <h3 style="margin-top:0;">Traffic & Pressure Timeline</h3>
-                <div style="height: 350px;"><canvas id="timelineChart"></canvas></div>
-            </div>
-            <div class="chart-box">
-                <h3 style="margin-top:0;">Latency (ms)</h3>
-                <div style="height: 350px;"><canvas id="distChart"></canvas></div>
-            </div>
-        </div>
-
-        <div class="chart-box">
-            <h3 style="margin-top:0;">End-to-End Endpoint Breakdown</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Resource Path</th>
-                        <th>Median (P50)</th>
-                        <th>Tail (P95)</th>
-                        <th>Extreme (P99)</th>
-                        <th>Timeouts</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${endpoints.map(e => `
-                        <tr>
-                            <td><code>${e.name}</code></td>
-                            <td>${e.p50}ms</td>
-                            <td class="${e.p95 > 2000 ? 'fail' : ''}">${e.p95}ms</td>
-                            <td>${e.p99}ms</td>
-                            <td class="${e.errors > 0 ? 'fail' : ''}">${e.errors}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="chart-box" style="background: #1e293b; color: white; border: none;">
-            <h3>Findings & Insights</h3>
-            <ul>
-                <li><strong>Throughput:</strong> Peak requests peaked at ${Math.max(...timelineRps).toFixed(0)} requests per second.</li>
-                <li><strong>Bottleneck Identification:</strong> The <code>${endpoints.sort((a, b) => b.p95 - a.p95)[0]?.name || 'N/A'}</code> resource exhibits the highest latency, likely the primary bottleneck.</li>
-                <li><strong>Retry Logic Recommendation:</strong> Error patterns show transient timeouts during ramp-up, suggesting a need for better connection pooling or CDN caching.</li>
-            </ul>
-        </div>
-    </div>
-
-    <script>
-        // Timeline Chart
-        new Chart(document.getElementById('timelineChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: ${JSON.stringify(timelineLabels)},
-                datasets: [
-                    {
-                        label: 'Requests/sec',
-                        data: ${JSON.stringify(timelineRps)},
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        fill: true,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'P95 Latency (ms)',
-                        data: ${JSON.stringify(timelineLatencies)},
-                        borderColor: '#ef4444',
-                        borderDash: [5, 5],
-                        fill: false,
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { type: 'linear', position: 'left', title: { display: true, text: 'RPS' } },
-                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Latency (ms)' } }
-                }
-            }
-        });
-
-        // Distribution Chart
-        new Chart(document.getElementById('distChart').getContext('2d'), {
-            type: 'polarArea',
-            data: {
-                labels: ['Min', 'Median', 'P95', 'P99', 'Max'],
-                datasets: [{
-                    data: [${rt.min}, ${rt.median}, ${rt.p95}, ${rt.p99}, ${rt.max}],
-                    backgroundColor: [
-                        'rgba(16, 185, 129, 0.5)',
-                        'rgba(79, 70, 229, 0.5)',
-                        'rgba(245, 158, 11, 0.5)',
-                        'rgba(239, 68, 68, 0.5)',
-                        'rgba(15, 23, 42, 0.5)'
-                    ]
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    </script>
 </body>
-</html>
-    `;
+</html>`;
 
-    fs.writeFileSync(path.join(__dirname, 'report.html'), html);
-    console.log('Successfully generated End-to-End descriptive report at report.html');
+    const htmlPath = path.join(__dirname, `${reportName}.html`);
+    fs.writeFileSync(htmlPath, html);
+    console.log(`HTML Report generated: ${reportName}.html`);
+
+    // Only attempt PDF generation if playwright is available and working
+    try {
+        await generatePDF(htmlPath);
+    } catch (err) {
+        console.warn('PDF generation failed (Playwright installed?):', err.message);
+    }
 }
 
-generateReport();
+async function generatePDF(htmlPath) {
+    const pdfPath = path.join(__dirname, `${reportName}.pdf`);
+    const browser = await chromium.launch();
+    const page = await browser.newPage();
+
+    // Load the local HTML file
+    await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle' });
+
+    // Generate PDF
+    await page.pdf({
+        path: pdfPath,
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+    });
+
+    await browser.close();
+    console.log(`PDF Report generated: ${reportName}.pdf`);
+}
+
+generateReports().catch(console.error);

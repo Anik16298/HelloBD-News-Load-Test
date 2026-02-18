@@ -7,14 +7,16 @@
     "test:smoke": "artillery run --target https://hellobd.news load-test.yml --environment smoke --output report.json",
     "test:load": "artillery run --target https://hellobd.news load-test.yml --environment load --output report.json",
     "test:pure": "artillery run --target https://hellobd.news load-test.yml --environment pure --output report.json",
-    "test:stepped": "artillery run --target https://hellobd.news load-test.yml --environment stepped --output report.json",
     "test:stress": "artillery run --target https://hellobd.news load-test.yml --environment stress --output report.json",
+    "test:extreme": "artillery run extreme-load-test.yml --output report.json",
     "check-site": "curl -I https://hellobd.news",
-    "report": "node generate-report.js && echo Report generated: report.html"
+    "report": "node generate-report.js",
+    "full-extreme-test": "npm run test:extreme && npm run report"
   },
   "dependencies": {
     "artillery": "^2.0.0-38",
-    "artillery-plugin-metrics-by-endpoint": "^1.24.0"
+    "artillery-plugin-metrics-by-endpoint": "^1.24.0",
+    "playwright": "^1.50.0"
   },
   "keywords": [],
   "author": "",

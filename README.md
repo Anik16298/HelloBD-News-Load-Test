@@ -90,4 +90,4 @@ npm run test:stress   # Stress test
 
 ---
 
-*Load testing powered by [Artillery.io](https://artillery.io)*
+*Architected by <a>href="https://github.com/Anik16298">Anik Chakraborty</a> *

@@ -46,7 +46,7 @@ async function generateReports() {
             const baseKey = `plugins.metrics-by-endpoint.${name}`;
             const ok = counters[`${baseKey}.codes.200`] || 0;
             const total = Object.keys(counters)
-                .filter(ck => ck.startsWith(`${baseKey}.codes.`))
+                .filter(ck => ck.startsWith(`${baseKey}.codes.`) || ck.startsWith(`${baseKey}.errors.`))
                 .reduce((acc, ck) => acc + counters[ck], 0) || ok;
 
             return {
@@ -66,19 +66,18 @@ async function generateReports() {
             successRate: successRate
         });
     }
-
     // Determine Status
     let statusText = 'EXCELLENT';
     let statusColor = '#10b981';
-    let statusEmoji = '✅';
+    let statusEmoji = '[OK]';
     if (successRate < 90) {
         statusText = 'CRITICAL';
         statusColor = '#ef4444';
-        statusEmoji = '🔴';
+        statusEmoji = '[CRITICAL]';
     } else if (successRate < 98) {
         statusText = 'DEGRADED';
         statusColor = '#f59e0b';
-        statusEmoji = '⚠️';
+        statusEmoji = '[WARN]';
     }
 
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -138,8 +137,8 @@ Server response time analysis:
 ---------------------------------
 Operational zones based on test data:
 
-- ✅ **SAFE ZONE:** Up to ${safeRps} Requests Per Second.
-- ⚠️ **WARNING ZONE:** Over ${avgRps} Requests Per Second.
+- **SAFE ZONE:** Up to ${safeRps} Requests Per Second.
+- **WARNING ZONE:** Over ${avgRps} Requests Per Second.
 
 6. RECOMMENDED FIXES (ACTION PLAN)
 ----------------------------------------

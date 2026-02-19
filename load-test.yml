@@ -68,50 +68,64 @@ config:
       User-Agent: "Artillery Load Tester (https://artillery.io)"
 
 scenarios:
-  - name: "Section: Homepage"
-    weight: 30
+  - name: "Journey: Homepage to Top Categories"
+    weight: 35
     flow:
       - get:
           url: "/"
           expect:
             - statusCode: 200
-
-  - name: "Section: Category - Bangladesh"
-    weight: 20
-    flow:
+      - think: 1
       - get:
           url: "/category/bangladesh"
           expect:
             - statusCode: 200
-
-  - name: "Section: Category - International"
-    weight: 20
-    flow:
+      - think: 1
       - get:
           url: "/category/international"
           expect:
             - statusCode: 200
 
-  - name: "Section: Category - Sports"
-    weight: 10
+  - name: "Journey: Sports and Entertainment"
+    weight: 25
     flow:
       - get:
           url: "/category/sports"
           expect:
             - statusCode: 200
-
-  - name: "Section: Category - Entertainment"
-    weight: 10
-    flow:
+      - think: 1
       - get:
           url: "/category/entertainment"
           expect:
             - statusCode: 200
 
-  - name: "Section: Policy Pages"
-    weight: 10
+  - name: "Journey: Policy Trust Check"
+    weight: 15
     flow:
       - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
           url: "/privacy-policy"
+          expect:
+            - statusCode: 200
+
+  - name: "Journey: Category Bounce Pattern"
+    weight: 25
+    flow:
+      - get:
+          url: "/category/international"
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: "/category/bangladesh"
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: "/category/sports"
           expect:
             - statusCode: 200

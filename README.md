@@ -1,93 +1,97 @@
-# HelloBD News — Load Test Suite
+# HelloBD News Load Test Suite 🚀
 
-A comprehensive load testing suite for [hellobd.news](https://hellobd.news) using **<a href="https://www.artillery.io">Artillery.io</a>**, covering category page validation under extreme traffic conditions.
+[![Artillery](https://img.shields.io/badge/Tested%20With-Artillery-FF6B00?style=for-the-badge)](https://www.artillery.io/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Site](https://img.shields.io/badge/Target-hellobd.news-0A66C2?style=for-the-badge)](https://hellobd.news)
 
----
+A comprehensive load testing suite for [hellobd.news](https://hellobd.news) powered by [**Artillery**](https://www.artillery.io/).
 
-## 📁 Project Structure
+## ✨ Why This Repo
 
-```
-hellobd-load-test/
-├── extreme-load-test.yml        # Category page load test (100–1000 users/sec, 9 phases)
-├── load-test.yml                # General load test scenarios (smoke, load, stress)
-├── generate-report.js           # Unified report generator (HTML + PDF + TXT)
-├── package.json                 # Project dependencies & npm scripts
-├── HelloBD_Load_Test_Report.txt  # Latest plain-text summary report
-├── HelloBD_Load_Test_Report.html # Latest HTML report
-├── HelloBD_Load_Test_Report.pdf  # Latest PDF report
-├── HelloBD_Load_Test_Report.md   # Detailed markdown results with tables & analysis
-└── README.md
-```
+- Simulates realistic and extreme traffic profiles
+- Validates critical homepage and category endpoints
+- Produces clean, shareable reports (HTML, PDF, TXT, MD)
+- Supports smoke, load, pure, stress, and extreme modes
 
----
+## ⚡ Quick Start
 
-## 🚀 Quick Start
-
-### Install dependencies
 ```bash
 npm install
 npx playwright install
-```
-
-### Run the Extreme Load Test (100–1000 users)
-```bash
-npm run test:extreme
-```
-
-### Generate HTML + PDF Reports
-```bash
-npm run report
-```
-
-### Run test + generate report in one command
-```bash
 npm run full-extreme-test
 ```
 
----
+## 🧭 Test Modes
 
-## 📊 Test Phases (Extreme Load Test)
+| Mode | Command | Purpose |
+|---|---|---|
+| Smoke | `npm run test:smoke` | Fast health check |
+| Load | `npm run test:load` | Normal production-like load |
+| Pure | `npm run test:pure` | Sustained high throughput |
+| Stress | `npm run test:stress` | Aggressive ramp and pressure |
+| Extreme | `npm run test:extreme` | 9-phase 100 to 1000 users/sec |
 
-| Phase        | Duration | Users/sec |
-|--------------|----------|-----------|
-| Warmup       | 30s      | 100       |
-| Push         | 30s      | 150       |
-| Hard Push    | 30s      | 250       |
-| Overload     | 30s      | 350       |
-| Extreme      | 30s      | 500       |
-| Brutal       | 30s      | 650       |
-| Savage       | 30s      | 800       |
-| Catastrophic | 30s      | 900       |
-| Max Load     | 30s      | 1000      |
+## 🧰 Utility Scripts
 
----
+| Command | Description |
+|---|---|
+| `npm run report` | Generate reports from `report.json` |
+| `npm run full-extreme-test` | Run extreme test and generate reports |
+| `npm run check-site` | Quick header check for `https://hellobd.news` |
 
-## 🔍 Scenarios Tested
+## 📊 Extreme Test Phases
 
-- `/category/international`
+| Phase | Duration | Users/sec |
+|---|---|---|
+| Warmup | 30s | 100 |
+| Push | 30s | 150 |
+| Hard Push | 30s | 250 |
+| Overload | 30s | 350 |
+| Extreme | 30s | 500 |
+| Brutal | 30s | 650 |
+| Savage | 30s | 800 |
+| Catastrophic | 30s | 900 |
+| Max Load | 30s | 1000 |
+
+## 🎯 Key Endpoints Covered
+
+- `/`
 - `/category/bangladesh`
+- `/category/international`
 - `/category/sports`
+- `/category/entertainment`
+- `/privacy-policy`
 
----
+## 📄 Generated Reports
 
-## 📈 Reports Generated
+After `npm run report`, the suite generates:
 
-After running `npm run report`, the following files are created:
+- `HelloBD_Load_Test_Report.html` - Visual dashboard report
+- `HelloBD_Load_Test_Report.pdf` - Share-ready PDF report
+- `HelloBD_Load_Test_Report.txt` - Quick plain-text summary
+- `HelloBD_Load_Test_Report.md` - Detailed markdown analysis
 
-- **`HelloBD_Load_Test_Report.html`** — Full visual HTML report with stats and endpoint breakdown
-- **`HelloBD_Load_Test_Report.pdf`** — PDF version of the HTML report (for sharing/presentation)
-- **`HelloBD_Load_Test_Report.txt`** — Plain-text summary with analysis and recommendations
+## 📁 Project Structure
 
----
-
-## 🛠 Other Test Scripts
-
-```bash
-npm run test:smoke    # Smoke test
-npm run test:load     # Standard load test
-npm run test:stress   # Stress test
+```text
+hellobd-load-test/
+|-- extreme-load-test.yml
+|-- load-test.yml
+|-- generate-report.js
+|-- package.json
+|-- HelloBD_Load_Test_Report.html
+|-- HelloBD_Load_Test_Report.pdf
+|-- HelloBD_Load_Test_Report.txt
+|-- HelloBD_Load_Test_Report.md
+`-- README.md
 ```
 
+## 🛠️ Tech Stack
+
+- [Artillery](https://www.artillery.io/)
+- [artillery-plugin-metrics-by-endpoint](https://www.npmjs.com/package/artillery-plugin-metrics-by-endpoint)
+- [Playwright](https://playwright.dev/)
+
 ---
 
-*<a href="https://hellobd.news">HelloBD News</a> Test Audit Architected by <a href="https://github.com/Anik16298">Anik Chakraborty</a>*
+Maintained by [Anik Chakraborty](https://github.com/Anik16298) for HelloBD performance testing.

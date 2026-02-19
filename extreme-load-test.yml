@@ -30,19 +30,53 @@ config:
       name: "Max Load"
   defaults:
     headers:
-      Content-Type: "application/json"
+      Accept: "text/html,application/xhtml+xml"
+      User-Agent: "Artillery Extreme Validator"
   plugins:
     metrics-by-endpoint:
       useOnlyPath: true
 
 scenarios:
-  - name: "Category Page Validation"
+  - name: "Journey: International -> Bangladesh -> Sports"
+    weight: 50
     flow:
       - get:
           url: "/category/international"
+          expect:
+            - statusCode: 200
       - think: 1
       - get:
           url: "/category/bangladesh"
+          expect:
+            - statusCode: 200
       - think: 1
       - get:
           url: "/category/sports"
+          expect:
+            - statusCode: 200
+
+  - name: "Journey: Bangladesh -> International"
+    weight: 30
+    flow:
+      - get:
+          url: "/category/bangladesh"
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: "/category/international"
+          expect:
+            - statusCode: 200
+
+  - name: "Journey: Sports Deep View"
+    weight: 20
+    flow:
+      - get:
+          url: "/category/sports"
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: "/category/sports"
+          expect:
+            - statusCode: 200

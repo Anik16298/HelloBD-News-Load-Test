@@ -2,8 +2,8 @@
              HelloBD NEWS: CATEGORY WISE LOAD TEST REPORT
 ************************************************************
 
-OVERALL STATUS: 🔴 CRITICAL
-REPORT GENERATE DATE: February 18, 2026
+OVERALL STATUS: [CRITICAL] CRITICAL
+REPORT GENERATE DATE: February 19, 2026
 
 1. TEST DETAILS & METHODOLOGY
 --------------------------------------
@@ -18,33 +18,33 @@ The test simulated a progressive load on the category pages with 9 defined phase
 - Catastrophic: 30s, 900 users/sec
 - Max Load: 30s, 1000 users/sec
 
-- **Total Duration:** 550 Seconds
-- **Average Request Rate:** 15558 requests every minute
-- **Total Traffic Volume:** 142526 Total Requests
+- **Total Duration:** 280 Seconds
+- **Average Request Rate:** 30270 requests every minute
+- **Total Traffic Volume:** 141501 Total Requests
 
 2. VISITOR SUCCESS & FAILURE BREAKDOWN
 ------------------------------------------
 Network traffic analysis results:
 
-- **SUCCESSFUL ENTRANCES:** 2015 (1.41% of all visitors)
-- **FAILED ATTEMPTS:** 140511 (98.59% of all visitors)
+- **SUCCESSFUL ENTRANCES:** 634 (0.45% of all visitors)
+- **FAILED ATTEMPTS:** 140867 (99.55% of all visitors)
 - **DAILY PROJECTION:** Based on current traffic patterns, if this load continues for 
-  just 1 hour, potential visitor loss would exceed 920155.
+  just 1 hour, potential visitor loss would exceed 1807932.
 
 3. LOSS CALCULATION BY SITE SECTION
 ---------------------------------------
 Failure rate analysis by category:
 
-- **/CATEGORY/INTERNATIONAL:** 0.0% Failure Rate (9607.1ms Tail Latency)
-- **/CATEGORY/BANGLADESH:** 0.0% Failure Rate (9416.8ms Tail Latency)
-- **/CATEGORY/SPORTS:** 0.0% Failure Rate (9416.8ms Tail Latency)
+- **/CATEGORY/INTERNATIONAL:** 99.6% Failure Rate (9801.2ms Tail Latency)
+- **/CATEGORY/BANGLADESH:** 99.5% Failure Rate (9801.2ms Tail Latency)
+- **/CATEGORY/SPORTS:** 99.5% Failure Rate (9801.2ms Tail Latency)
 
 *Observation: There is noticeable stress on certain endpoints as load increases.*
 
 4. PROBLEM IDENTIFICATION (ANALYSIS)
 ------------------------------------------
 Server response time analysis:
-- **Speed Test:** The median response time was **6187.2ms**.
+- **Speed Test:** The median response time was **4316.6ms**.
 - **Stress Test:** The P95 (slowest 5%) reached **9999.2ms**.
 - **Observation:** The server is returning some errors under pressure.
 
@@ -52,12 +52,11 @@ Server response time analysis:
 ---------------------------------
 Operational zones based on test data:
 
-- ✅ **SAFE ZONE:** Up to 207.4 Requests Per Second.
-- ⚠️ **WARNING ZONE:** Over 259.3 Requests Per Second.
+- **SAFE ZONE:** Up to 403.6 Requests Per Second.
+- **WARNING ZONE:** Over 504.5 Requests Per Second.
 
 6. RECOMMENDED FIXES (ACTION PLAN)
 ----------------------------------------
 1. Ensure the category pages are properly cached at the Edge (CDN).
 2. Monitor database query execution times for category filters.
 3. Consider horizontal scaling if arrival rates exceed 50 users/sec.
-
